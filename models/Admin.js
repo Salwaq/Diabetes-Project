@@ -10,7 +10,7 @@ const adminSchema = new mongoose.Schema({
   email: String,
   role: {
     type: String,
-    enum: ["Admin", "Doctor"],
+    enum: ["Admin"],
   },
 })
 
@@ -27,16 +27,8 @@ const loginJoi = Joi.object({
   password: Joi.string().min(2).max(100).required(),
 })
 
-const profileJoi = Joi.object({
-  firstName: Joi.string().min(2).max(100),
-  lastName: Joi.string().min(2).max(100),
-  password: Joi.string().min(2).max(100).required(),
-  avatar: Joi.string().uri().min(2).max(100).allow(""),
-})
-
 const Admin = mongoose.model("Admin", adminSchema)
 
 module.exports.Admin = Admin
 module.exports.signupJoi = signupJoi
 module.exports.loginJoi = loginJoi
-module.exports.profileJoi = profileJoi

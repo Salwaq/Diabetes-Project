@@ -7,16 +7,11 @@ const visitSchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "Doctor",
   },
-  dates: [
-    {
-      type: mongoose.Types.ObjectId,
-      ref: "Paitent",
-    },
-  ],
+  dates: Date,
 })
 
 const visitJoi = Joi.object({
-  dates: Joi.array().items(Joi.Objectid().default(Date.now)),
+  date: Joi.date().raw().required(),
 })
 
 const Visit = mongoose.model("Visit", visitSchema)
