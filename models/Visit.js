@@ -3,11 +3,15 @@ const Joi = require("joi")
 const joiObjectid = require("joi-objectid")
 
 const visitSchema = new mongoose.Schema({
-  doctorId: {
+  date: Date,
+  idPaitent: {
+    type: mongoose.Types.ObjectId,
+    ref: "Paitent",
+  },
+  idDoctor: {
     type: mongoose.Types.ObjectId,
     ref: "Doctor",
   },
-  dates: Date,
 })
 
 const visitJoi = Joi.object({

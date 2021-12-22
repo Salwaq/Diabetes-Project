@@ -3,15 +3,14 @@ const router = express.Router()
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const { Doctor, loginJoi, signupJoi } = require("../models/Doctor")
-
-require("dotenv").config()
 const validateBody = require("../midllewere/validateBody")
 const checkAdmin = require("../midllewere/checkAdmin")
 const checkToken = require("../midllewere/checkToken")
 const checkId = require("../midllewere/checkId")
 const { Visit, visitJoi } = require("../models/Visit")
 const checkDoctor = require("../midllewere/checkDoctor")
-const mongoose = require("mongoose")
+
+const { Paitent } = require("../models/Paitent")
 
 router.post("/add-doctor", validateBody(signupJoi), checkAdmin, async (req, res) => {
   try {
@@ -64,7 +63,7 @@ router.get("/profile", async (req, res) => {
     const decryptedToken = jwt.verify(token, process.env.JWT_SECRET_KEY)
     const userId = decryptedToken.id
 
-    const user = await Doctor.findById(userId)
+    const user = await Doctor.findById(userId).populate("paitents").populate("visit")
     if (!user) return res.status(400).json("user not found")
     req.userId = userId
 
@@ -86,13 +85,8 @@ router.get("/:id", checkId, async (req, res) => {
 })
 
 // ________________________Visit___________________________
-router.get("/:idDoctor/visit", async (req, res) => {
+router.get("/:idPaitent/visit", checkId("idPaitent"), async (req, res) => {
   try {
-    const id = req.params.idDoctor
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).send(`the path idDoctor is not valid opjectid`) /// checkId
-    const doctor = await Doctor.findById(req.params.idDoctor)
-    if (!doctor) return res.status(404).send("doctor not found")
-
     const visit = await Visit.find({ doctor: req.params.id })
     res.json(visit)
   } catch (error) {
@@ -100,16 +94,12 @@ router.get("/:idDoctor/visit", async (req, res) => {
     res.status(500).send(error.message)
   }
 })
-router.post("/:idDoctor/visit", checkDoctor, validateBody(visitJoi), async (req, res) => {
+
+router.post("/:idPaitent/visit", checkDoctor, checkId("idPaitent"), validateBody(visitJoi), async (req, res) => {
   try {
     const { date } = req.body
-    const id = req.params.idDoctor
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).send(`the path idDoctor is not valid opjectid`) /// checkId
-    const doctor = await Doctor.findById(req.params.idDoctor)
-    if (!doctor) return res.status(404).send("doctor not found")
-
-    const newVisit = new Visit({ date, idDoctor: req.params.idDoctor })
-    await Doctor.findByIdAndUpdate(req.params.idDoctor, { $push: { visit: newVisit._id } })
+    const newVisit = new Visit({ date, idPaitent: req.params.idPaitent, idDoctor: req.userId })
+    await Paitent.findByIdAndUpdate(req.params.idPaitent, { $set: { visit: newVisit._id } }, { new: true })
 
     await newVisit.save()
     res.json(newVisit)

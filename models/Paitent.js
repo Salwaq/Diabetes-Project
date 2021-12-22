@@ -2,13 +2,13 @@ const mongoose = require("mongoose")
 const Joi = require("joi")
 const joiObjectid = require("joi-objectid")
 
-const CdSchema = new mongoose.Schema({
-  doctorId: {
-    type: mongoose.Types.ObjectId,
-    ref: "Doctor",
-  },
-  cumulativeDiabete: Number,
-})
+// const CdSchema = new mongoose.Schema({
+//   doctorId: {
+//     type: mongoose.Types.ObjectId,
+//     ref: "Doctor",
+//   },
+//   cumulativeDiabete: Number,
+// })
 
 const paitentSchema = new mongoose.Schema({
   firstName: String,
@@ -25,29 +25,19 @@ const paitentSchema = new mongoose.Schema({
   insurance: String,
   MNR: String,
   Question: String,
-  doctorId: {
+  doctor: {
     type: mongoose.Types.ObjectId,
     ref: "Doctor",
   },
+  infoPaitent: {
+    type: mongoose.Types.ObjectId,
+    ref: "infoPaitent",
+  },
+  visit: {
+    type: mongoose.Types.ObjectId,
+    ref: "Visit",
+  },
 
-  diabetesType: {
-    type: String,
-    enum: ["Type A", "Type B", "gestational"],
-  },
-  cumulativeDiabetes: [CdSchema],
-  CdAverage: {
-    type: Number,
-    default: 0,
-  },
-  bloodType: String,
-  weight: {
-    type: Number,
-    default: 0,
-  },
-  height: {
-    type: Number,
-    default: 0,
-  },
   smoking: {
     type: Boolean,
     default: false,
@@ -68,7 +58,7 @@ const signupJoi = Joi.object({
     .length(10)
     .pattern(/^[0-9]+$/)
     .required(),
-  doctorId: Joi.Objectid().required(),
+  doctor: Joi.Objectid().required(),
 })
 
 const loginJoi = Joi.object({
@@ -76,21 +66,8 @@ const loginJoi = Joi.object({
   password: Joi.string().min(2).max(100).required(),
 })
 
-const infoPaitentJoi = {
-  bloodType: Joi.string().min(2).max(100).required(),
-  weight: Joi.number().min(2).max(100).required(),
-  height: Joi.number().min(2).max(100).required(),
-  diabetesType: Joi.string().valid("Type A", "Type B", "gestational").required(),
-}
-
-const addCdJoy = {
-  cumulativeDiabetes: Joi.array().items(Joi.Objectid()),
-}
-
 const Paitent = mongoose.model("Paitent", paitentSchema)
 
 module.exports.Paitent = Paitent
 module.exports.signupJoi = signupJoi
 module.exports.loginJoi = loginJoi
-module.exports.infoPaitentJoi = infoPaitentJoi
-module.exports.addCdJoy = addCdJoy

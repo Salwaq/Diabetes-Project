@@ -2,13 +2,13 @@ const express = require("express")
 const router = express.Router()
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
-const { Paitent, loginJoi, signupJoi, profileJoi, infoPaitentJoi, addCdJoy } = require("../models/Paitent")
+const { Paitent, loginJoi, signupJoi } = require("../models/Paitent")
+const { infoPaitent, infoPaitentJoi, addCdJoy } = require("../models/infoPaitent")
 require("dotenv").config()
 const validateBody = require("../midllewere/validateBody")
 const checkId = require("../midllewere/checkId")
 const checkAdmin = require("../midllewere/checkAdmin")
 const checkDoctor = require("../midllewere/checkDoctor")
-const checkToken = require("../midllewere/checkToken")
 
 router.post("/signup", checkAdmin, validateBody(signupJoi), async (req, res) => {
   try {
@@ -24,7 +24,7 @@ router.post("/signup", checkAdmin, validateBody(signupJoi), async (req, res) => 
       phoneNumber,
       smoking,
       MNR,
-      doctorId,
+      doctor,
     } = req.body
 
     const userFound = await Paitent.findOne({ email })
@@ -35,6 +35,13 @@ router.post("/signup", checkAdmin, validateBody(signupJoi), async (req, res) => 
     let Mnr = Math.floor(Math.random() * 1000000)
     const MnrFound = await Paitent.findOne({ MNR })
     if (MnrFound) Mnr = Math.floor(Math.random() * 1000000)
+
+    // let Mnr = Math.floor(Math.random() * 1000000)
+    // let MnrFound = await Paitent.findOne({ MNR })
+    // while (MnrFound) {
+    //   Mnr = Math.floor(Math.random() * 1000000)
+    //   MnrFound = await Paitent.findOne({ MNR })
+    // }
 
     const user = new Paitent({
       firstName,
@@ -48,11 +55,13 @@ router.post("/signup", checkAdmin, validateBody(signupJoi), async (req, res) => 
       phoneNumber,
       smoking,
       MNR: Mnr,
-      doctorId,
+      doctor,
     })
 
+    await Paitent.findByIdAndUpdate(doctor, { $push: { paitents: user._id } })
+
     await user.save()
-    res.send("new user of Paitent created")
+    res.send(user)
   } catch (error) {
     res.status(500).send(error.message)
   }
@@ -88,7 +97,11 @@ router.get("/profile", async (req, res) => {
     if (!user) return res.status(400).json("user not found")
     req.userId = userId
 
-    const userPaitent = await Paitent.findById(req.userId).select("-__v -password")
+    const userPaitent = await Paitent.findById(req.userId)
+      .select("-__v -password")
+      .populate("infoPaitent")
+      .populate("doctor")
+      .populate("visit")
     res.json(userPaitent)
   } catch (error) {
     res.status(500).send(error.message)
@@ -97,16 +110,19 @@ router.get("/profile", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const paitent = await Paitent.find()
+    const paitent = await Paitent.find().populate("infoPaitent").populate("doctor")
     res.json(paitent)
   } catch (error) {
     res.status(500).send(error.message)
   }
 })
 
-router.get("/:id", checkId, async (req, res) => {
+router.get("/:paitentId", checkId("paitentId"), async (req, res) => {
   try {
-    const paitent = await Paitent.findById(req.params.id)
+    const paitent = await Paitent.findById(req.params.paitentId)
+      .populate("infoPaitent")
+      .populate("visit")
+      .populate("doctor")
     if (!paitent) return res.status(404).send("paitent not found")
     res.json(paitent)
   } catch (error) {
@@ -114,9 +130,9 @@ router.get("/:id", checkId, async (req, res) => {
   }
 })
 
-router.delete("/:id", checkAdmin, checkId, async (req, res) => {
+router.delete("/:paitentId", checkAdmin, checkId("paitentId"), async (req, res) => {
   try {
-    const paitent = await Paitent.findByIdAndRemove(req.params.id)
+    const paitent = await Paitent.findByIdAndRemove(req.params.paitentId)
     if (!paitent) return res.status(400).json("paitent not found")
     res.json("paitent removed")
   } catch (error) {
@@ -125,56 +141,62 @@ router.delete("/:id", checkAdmin, checkId, async (req, res) => {
   }
 })
 
-router.get("/:id/info", validateBody(infoPaitentJoi), checkId, async (req, res) => {
-  try {
-    const paitentInfo = await Paitent.findById(req.params.id)
-    if (!paitentInfo) return res.status(404).send("paitentInfo not found")
+// ___________________________________informaition_______________________________________________
 
-    res.json(paitentInfo)
-  } catch (error) {
-    res.status(500).send(error.message)
-  }
-})
-
-router.post("/:id/info", checkDoctor, checkId, async (req, res) => {
+router.post("/:paitentId/info", checkDoctor, checkId("paitentId"), validateBody(infoPaitentJoi), async (req, res) => {
   try {
     const { bloodType, weight, height, diabetesType } = req.body
+    const paitent = await Paitent.findById(req.params.paitentId)
+    if (!paitent) return res.status(404).send("film not found")
 
-    const infoPaitent = new Paitent({
+    const informaitionPaitent = new infoPaitent({
       bloodType,
       weight,
       height,
       diabetesType,
+      paitentId: req.params.paitentId,
     })
 
-    await infoPaitent.save()
-    res.json(infoPaitent)
+    await Paitent.findByIdAndUpdate(
+      req.params.paitentId,
+      { $set: { infoPaitent: informaitionPaitent._id } },
+      { new: true }
+    )
+    await informaitionPaitent.save()
+    res.json(informaitionPaitent)
   } catch (error) {
     res.status(500).send(error.message)
   }
 })
 
-router.post("/:id/cd", checkDoctor, checkId, validateBody(addCdJoy), async (req, res) => {
+// _________________________________average cumulative Diabetes_____________________________________
+
+router.post("/:paitentId/info", checkDoctor, checkId, validateBody(addCdJoy), async (req, res) => {
   try {
     let paitent = await Paitent.findById(req.params.paitentId)
     if (!paitent) return res.status(404).send("paitent not found")
 
     const { cumulativeDiabetes } = req.body
+
+    //add infoP
+
     const newCD = {
       cumulativeDiabetes,
       userId: req.userId,
     }
 
-    paitent = await Paitent.findByIdAndUpdate(req.params.id, { $push: { cumulativeDiabetes: newCD } }, { new: true })
+    infoPaitent = await infoPaitent.findByIdAndUpdate(
+      paitent.infoPaitent,
+      { $push: { cumulativeDiabetes: newCD } },
+      { new: true }
+    )
 
     let sum = 0
-    paitent.cumulativeDiabetes.forEach(cumulativeDiabete => {
+    infoPaitent.cumulativeDiabetes.forEach(cumulativeDiabete => {
       sum += cumulativeDiabete
     })
-    console.log(paitent.cumulativeDiabete)
-    console.log(sum)
 
-    const CdAverage = sum / paitent.cumulativeDiabete.length
+    const CdAverage = sum / infoPaitent.cumulativeDiabete.length
 
     await Paitent.findByIdAndUpdate(req.params.id, { $set: { CdAverage } })
 

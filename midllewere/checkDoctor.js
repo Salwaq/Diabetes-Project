@@ -14,6 +14,8 @@ const checkDoctor = async (req, res, next) => {
 
     if (DoctorUser.role !== "Doctor") return res.status(403).send("you are not Doctor")
 
+    req.userId = userId
+
     next()
   } catch (error) {
     console.log(error)
