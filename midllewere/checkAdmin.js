@@ -12,8 +12,6 @@ const checkAdmin = async (req, res, next) => {
     const AdminUser = await Admin.findById(userId)
     if (!AdminUser) return res.status(404).json("AdminUser not found")
 
-    if (AdminUser.role !== "Admin") return res.status(403).send("you are not admin")
-
     next()
   } catch (error) {
     console.log(error)

@@ -2,14 +2,6 @@ const mongoose = require("mongoose")
 const Joi = require("joi")
 const joiObjectid = require("joi-objectid")
 
-// const CdSchema = new mongoose.Schema({
-//   doctorId: {
-//     type: mongoose.Types.ObjectId,
-//     ref: "Doctor",
-//   },
-//   cumulativeDiabete: Number,
-// })
-
 const paitentSchema = new mongoose.Schema({
   firstName: String,
   midName: String,
@@ -24,7 +16,12 @@ const paitentSchema = new mongoose.Schema({
   phoneNumber: String,
   insurance: String,
   MNR: String,
-  Question: String,
+  questions: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Question",
+    },
+  ],
   doctor: {
     type: mongoose.Types.ObjectId,
     ref: "Doctor",
@@ -33,10 +30,12 @@ const paitentSchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "infoPaitent",
   },
-  visit: {
-    type: mongoose.Types.ObjectId,
-    ref: "Visit",
-  },
+  visits: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Visit",
+    },
+  ],
 
   smoking: {
     type: Boolean,

@@ -19,10 +19,18 @@ const doctorSchema = new mongoose.Schema({
     type: String,
     default: "Doctor",
   },
-  visit: {
-    type: mongoose.Types.ObjectId,
-    ref: "Visit",
-  },
+  visits: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Visit",
+    },
+  ],
+  questions: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Question",
+    },
+  ],
 })
 const signupJoi = Joi.object({
   firstName: Joi.string().min(2).max(100).required(),

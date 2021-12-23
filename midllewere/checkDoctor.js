@@ -12,8 +12,6 @@ const checkDoctor = async (req, res, next) => {
     const DoctorUser = await Doctor.findById(userId)
     if (!DoctorUser) return res.status(404).json("DoctorUser not found")
 
-    if (DoctorUser.role !== "Doctor") return res.status(403).send("you are not Doctor")
-
     req.userId = userId
 
     next()

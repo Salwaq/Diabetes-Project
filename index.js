@@ -6,7 +6,7 @@ const Joi = require("joi")
 const JoiObjectId = require("joi-objectid")
 Joi.Objectid = JoiObjectId(Joi)
 const users = require("./routes/users")
-// const visits = require("./routes/visits")
+const articles = require("./routes/articles")
 const paitents = require("./routes/paitents")
 const doctors = require("./routes/doctors")
 
@@ -20,9 +20,8 @@ app.use(cors())
 app.use(express.json())
 
 app.use("/api/auth", users)
-// app.use("/api/visit", visits)
+app.use("/api/article", articles)
 app.use("/api/paitent", paitents)
-
 app.use("/api/doctors", doctors)
 
 const port = 8000

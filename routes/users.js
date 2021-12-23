@@ -6,8 +6,8 @@ const { Admin, loginJoi, signupJoi } = require("../models/Admin")
 require("dotenv").config()
 const validateBody = require("../midllewere/validateBody")
 const checkAdmin = require("../midllewere/checkAdmin")
-const checkToken = require("../midllewere/checkToken")
-
+const { Paitent } = require("../models/Paitent")
+const { Doctor } = require("../models/Doctor")
 router.post("/signup-admin", validateBody(signupJoi), async (req, res) => {
   try {
     const { firstName, lastName, email, avatar, password } = req.body
@@ -51,10 +51,29 @@ router.post("/login-admin", validateBody(loginJoi), async (req, res) => {
   }
 })
 
-router.get("/profile", checkToken, async (req, res) => {
+router.get("/profile", checkAdmin, async (req, res) => {
   try {
     const userAdmin = await Admin.findById(req.userId).select("-__v -password")
     res.json(userAdmin)
+  } catch (error) {
+    res.status(500).send(error.message)
+  }
+})
+
+//__________________ change Dr ________________________
+
+router.get("/:paitentId/changedr/:doctorId", checkAdmin, async (req, res) => {
+  try {
+    const paitent = await Paitent.findById(req.params.paitentId)
+    if (!paitent) return res.status(404).send("paitent not found")
+
+    let oldDr = await Doctor.findById(paitent.doctor)
+    if (!oldDr) return res.status(404).send("doctor not found")
+
+    oldDr = await Doctor.findByIdAndUpdate(paitent.doctor, { $pull: { paitents: req.params.paitentId } }, { new: true })
+    await Paitent.findByIdAndUpdate(req.params.paitentId, { $set: { doctor: req.params.doctorId } }, { new: true })
+
+    res.json("change Dr")
   } catch (error) {
     res.status(500).send(error.message)
   }

@@ -5,12 +5,11 @@ const jwt = require("jsonwebtoken")
 const { Doctor, loginJoi, signupJoi } = require("../models/Doctor")
 const validateBody = require("../midllewere/validateBody")
 const checkAdmin = require("../midllewere/checkAdmin")
-const checkToken = require("../midllewere/checkToken")
 const checkId = require("../midllewere/checkId")
 const { Visit, visitJoi } = require("../models/Visit")
 const checkDoctor = require("../midllewere/checkDoctor")
-
 const { Paitent } = require("../models/Paitent")
+const { Question, answerJoi } = require("../models/Question")
 
 router.post("/add-doctor", validateBody(signupJoi), checkAdmin, async (req, res) => {
   try {
@@ -31,7 +30,7 @@ router.post("/add-doctor", validateBody(signupJoi), checkAdmin, async (req, res)
     })
 
     await user.save()
-    res.send("new user of doctor created")
+    res.send(user)
   } catch (error) {
     res.status(500).send(error.message)
   }
@@ -55,6 +54,18 @@ router.post("/login-doctor", validateBody(loginJoi), async (req, res) => {
   }
 })
 
+router.get("/paitents", checkDoctor, async (req, res) => {
+  try {
+    const paitent = await Paitent.find().populate("infoPaitent")
+
+    await Doctor.findByIdAndUpdate(req.userId, { $push: { paitents: paitent._id } })
+
+    res.json(paitent)
+  } catch (error) {
+    res.status(500).send(error.message)
+  }
+})
+
 router.get("/profile", async (req, res) => {
   try {
     const token = req.header("Authorization")
@@ -63,7 +74,8 @@ router.get("/profile", async (req, res) => {
     const decryptedToken = jwt.verify(token, process.env.JWT_SECRET_KEY)
     const userId = decryptedToken.id
 
-    const user = await Doctor.findById(userId).populate("paitents").populate("visit")
+    const user = await Doctor.findById(userId).populate("paitents").populate("visits")
+
     if (!user) return res.status(400).json("user not found")
     req.userId = userId
 
@@ -76,7 +88,7 @@ router.get("/profile", async (req, res) => {
 
 router.get("/:id", checkId, async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.params.id).populate("visit")
+    const doctor = await Doctor.findById(req.params.id).populate("visits")
     if (!doctor) return res.status(404).send("doctor not found")
     res.json(doctor)
   } catch (error) {
@@ -99,11 +111,47 @@ router.post("/:idPaitent/visit", checkDoctor, checkId("idPaitent"), validateBody
   try {
     const { date } = req.body
     const newVisit = new Visit({ date, idPaitent: req.params.idPaitent, idDoctor: req.userId })
-    await Paitent.findByIdAndUpdate(req.params.idPaitent, { $set: { visit: newVisit._id } }, { new: true })
+    await Paitent.findByIdAndUpdate(req.params.idPaitent, { $push: { visits: newVisit._id } })
 
+    await Doctor.findByIdAndUpdate(req.userId, { $push: { visits: newVisit._id } }, { new: true })
     await newVisit.save()
     res.json(newVisit)
   } catch (error) {
+    res.status(500).send(error.message)
+  }
+})
+router.delete("/:idPaitent/visit/:idvisit", checkDoctor, checkId("idPaitent"), checkId("idvisit"), async (req, res) => {
+  try {
+    const visitFound = await Visit.findById(req.params.idvisit)
+    if (!visitFound) return res.status(404).json("comment not found")
+
+    await Paitent.findByIdAndUpdate(req.params.idPaitent, { $pull: { visits: visitFound._id } })
+    await Visit.findOneAndRemove(req.params.idvisit)
+
+    res.json("visit is remove")
+  } catch (error) {
+    res.status(500).send(error.message)
+  }
+})
+
+// _________________________________ANSWER________________________________
+
+router.post("/:questionId", checkId("questionId"), checkDoctor, validateBody(answerJoi), async (req, res) => {
+  try {
+    const { answer } = req.body
+
+    const question = await Question.findById(req.params.questionId)
+    if (!question) return res.status(404).send("question not found")
+    // console.log(req.userId, question)
+    if (req.userId != question.doctor) return res.status(403).send("authorization action")
+
+    await Question.findByIdAndUpdate(req.params.questionId, { $set: { answer } }, { new: true })
+    //بعد صنع الكومنت اضيفه للاراي حقتو الاساسيه الكومنت اراي
+    //فتجينا مع قيت فيلم << نحط بوبيوليت كومنس  بالفيلم
+
+    res.json("added answer ")
+  } catch (error) {
+    console.log(error)
     res.status(500).send(error.message)
   }
 })

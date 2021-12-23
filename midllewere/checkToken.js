@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken")
-const { Admin } = require("../models/Admin")
+const { Paitent } = require("../models/Paitent")
 
 const checkToken = async (req, res, next) => {
   try {
@@ -7,11 +7,11 @@ const checkToken = async (req, res, next) => {
     if (!token) return res.status(401).json("token is required")
 
     const decryptedToken = jwt.verify(token, process.env.JWT_SECRET_KEY)
-    const userId = decryptedToken.id
+    const paitentId = decryptedToken.id
 
-    const user = await Admin.findById(userId)
+    const user = await Paitent.findById(paitentId)
     if (!user) return res.status(400).json("user not found")
-    req.userId = userId
+    req.paitentId = paitentId
 
     next()
   } catch (error) {

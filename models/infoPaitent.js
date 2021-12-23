@@ -3,11 +3,11 @@ const Joi = require("joi")
 const joiObjectid = require("joi-objectid")
 
 const CdSchema = new mongoose.Schema({
-  doctorId: {
+  paitentId: {
     type: mongoose.Types.ObjectId,
-    ref: "Doctor",
+    ref: "Paitent",
   },
-  cumulativeDiabete: Number,
+  cumulativeDiabetes: Number,
 })
 
 const infoPaitentSchema = new mongoose.Schema({
@@ -43,9 +43,9 @@ const infoPaitentJoi = Joi.object({
   diabetesType: Joi.string().valid("Type A", "Type B", "gestational").required(),
 })
 
-const addCdJoy = {
+const addCdJoy = Joi.object({
   cumulativeDiabetes: Joi.number().min(2).max(200).required(),
-}
+})
 
 const infoPaitent = mongoose.model("infoPaitent", infoPaitentSchema)
 
