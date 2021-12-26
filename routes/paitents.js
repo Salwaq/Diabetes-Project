@@ -111,7 +111,11 @@ router.get("/profile", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const paitent = await Paitent.find().populate("infoPaitent").populate("doctor")
+    const paitent = await Paitent.find()
+      .populate("infoPaitent")
+      .populate("doctor")
+      .populate("visits")
+      .populate("questions")
     res.json(paitent)
   } catch (error) {
     res.status(500).send(error.message)

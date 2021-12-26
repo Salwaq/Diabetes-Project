@@ -60,6 +60,15 @@ router.get("/profile", checkAdmin, async (req, res) => {
   }
 })
 
+router.get("/", checkAdmin, async (req, res) => {
+  try {
+    const userAdmin = await Admin.find().select("-__v -password")
+    res.json(userAdmin)
+  } catch (error) {
+    res.status(500).send(error.message)
+  }
+})
+
 //__________________ change Dr ________________________
 
 router.get("/:paitentId/changedr/:doctorId", checkAdmin, async (req, res) => {

@@ -66,6 +66,18 @@ router.get("/paitents", checkDoctor, async (req, res) => {
   }
 })
 
+router.get("/", checkAdmin, async (req, res) => {
+  try {
+    const userDoctor = await Doctor.find()
+      .select("-__v -password")
+      .populate("paitents")
+      .populate("questions")
+      .populate("visits")
+    res.json(userDoctor)
+  } catch (error) {
+    res.status(500).send(error.message)
+  }
+})
 router.get("/profile", async (req, res) => {
   try {
     const token = req.header("Authorization")
