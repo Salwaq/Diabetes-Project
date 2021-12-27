@@ -108,6 +108,16 @@ router.get("/:id", checkId, async (req, res) => {
   }
 })
 
+router.delete("/:doctorId", checkId("doctorId"), checkAdmin, async (req, res) => {
+  try {
+    const doctor = await Doctor.findByIdAndRemove(req.params.doctorId)
+    if (!doctor) return res.status(404).send("doctor not found")
+    res.json("doctor remove ")
+  } catch (error) {
+    res.status(500).send(error.message)
+  }
+})
+
 // ________________________Visit___________________________
 router.get("/:idPaitent/visit", checkId("idPaitent"), async (req, res) => {
   try {
