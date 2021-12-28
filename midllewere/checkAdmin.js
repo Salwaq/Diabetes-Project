@@ -12,6 +12,8 @@ const checkAdmin = async (req, res, next) => {
     const AdminUser = await Admin.findById(userId)
     if (!AdminUser) return res.status(404).json("AdminUser not found")
 
+    req.userId = userId
+
     next()
   } catch (error) {
     console.log(error)

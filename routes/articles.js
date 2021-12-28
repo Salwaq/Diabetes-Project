@@ -12,7 +12,7 @@ router.get("/", async (req, res) => {
 
 router.post("/", checkAdmin, validateBody(articleJoi), async (req, res) => {
   try {
-    const { title, description, image, auther } = req.body
+    const { title, description, image } = req.body
     const id = req.userId
     const article = new Article({
       title,
@@ -29,7 +29,7 @@ router.post("/", checkAdmin, validateBody(articleJoi), async (req, res) => {
 })
 
 router.put("/:articleId", checkId("articleId"), checkAdmin, async (req, res) => {
-  const { title, description, image, auther } = req.body
+  const { title, description, image } = req.body
 
   try {
     const article = await Article.findByIdAndUpdate(
