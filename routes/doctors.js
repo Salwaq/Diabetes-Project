@@ -86,12 +86,26 @@ router.get("/profile", async (req, res) => {
     const decryptedToken = jwt.verify(token, process.env.JWT_SECRET_KEY)
     const userId = decryptedToken.id
 
-    const user = await Doctor.findById(userId).populate("paitents").populate("visits")
+    const user = await Doctor.findById(userId)
 
     if (!user) return res.status(400).json("user not found")
     req.userId = userId
 
-    const userDoctor = await Doctor.findById(req.userId).select("-__v -password")
+    const userDoctor = await Doctor.findById(req.userId)
+      .select("-__v -password")
+      .populate({
+        path: "paitents",
+        populate: {
+          path: "questions",
+        },
+      })
+      .populate({
+        path: "visits",
+        populate: {
+          path: "idPaitent",
+        },
+      })
+      .populate("questions")
     res.json(userDoctor)
   } catch (error) {
     res.status(500).send(error.message)
@@ -121,7 +135,7 @@ router.delete("/:doctorId", checkId("doctorId"), checkAdmin, async (req, res) =>
 // ________________________Visit___________________________
 router.get("/:idPaitent/visit", checkId("idPaitent"), async (req, res) => {
   try {
-    const visit = await Visit.find({ doctor: req.params.id })
+    const visit = await Visit.find({ doctor: req.params.id }).populate("idPaitent")
     res.json(visit)
   } catch (error) {
     console.log(error)

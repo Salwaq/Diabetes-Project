@@ -4,6 +4,7 @@ const joiObjectid = require("joi-objectid")
 
 const visitSchema = new mongoose.Schema({
   date: Date,
+  time: String,
   idPaitent: {
     type: mongoose.Types.ObjectId,
     ref: "Paitent",
