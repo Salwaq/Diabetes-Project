@@ -10,6 +10,16 @@ router.get("/", async (req, res) => {
   res.json(articles)
 })
 
+router.get("/:idArtical", checkId("idArtical"), async (req, res) => {
+  try {
+    const article = await Article.findById(req.params.idArtical)
+    if (!article) return res.status(404).send("paitent not found")
+    res.json(article)
+  } catch (error) {
+    res.status(500).send(error.message)
+  }
+})
+
 router.post("/", checkAdmin, validateBody(articleJoi), async (req, res) => {
   try {
     const { title, description, image } = req.body
