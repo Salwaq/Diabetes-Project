@@ -100,12 +100,19 @@ router.get("/profile", async (req, res) => {
         },
       })
       .populate({
+        path: "paitents",
+        populate: {
+          path: "infoPaitent",
+        },
+      })
+      .populate({
         path: "visits",
         populate: {
           path: "idPaitent",
         },
       })
       .populate("questions")
+
     res.json(userDoctor)
   } catch (error) {
     res.status(500).send(error.message)
